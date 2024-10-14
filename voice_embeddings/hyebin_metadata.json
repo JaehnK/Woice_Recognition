@@ -1,0 +1,1 @@
+{"speaker_name": "hyebin", "original_audio": "/home/jaehun/redimnet/hb/hb.wav", "embedding_file": "voice_embeddings/hyebin_embedding.npy", "model_used": "ReDimNet_b0", "embedding_dim": 192}
