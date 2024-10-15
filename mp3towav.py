@@ -39,4 +39,4 @@ def m4a2wav(input_dir:str, output_dir:str):
     
     print("Conversion complete.")
     
-m4a2wav('./jaehun', './jaehun')
+m4a2wav('./', './')
