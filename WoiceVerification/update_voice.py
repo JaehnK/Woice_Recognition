@@ -1,12 +1,15 @@
 import numpy as np
 import torch
+import torch.nn as nn
 import torchaudio
 import os
 from typing import List
 from pathlib import Path
 
+from load_model import load_driver_recognition_model
+
 # ReDimNet 모델 로드 (이전 코드에서 정의한 대로)
-model = torch.hub.load('IDRnD/ReDimNet', 'b0', pretrained=True, finetuned=True)
+# model = torch.hub.load('IDRnD/ReDimNet', 'b0', pretrained=True, finetuned=True)
 
 def load_audio(file_path: str) -> torch.Tensor:
     waveform, sample_rate = torchaudio.load(file_path)
@@ -30,7 +33,8 @@ def update_embedding(current_embedding: np.ndarray, new_embedding: np.ndarray, w
     """
     return weight * current_embedding + (1 - weight) * new_embedding
 
-def update_voice_profile(stored_embedding_path: str, new_audio_files: List[str], output_path: str, weight: float = 0.7):
+def update_voice_profile(stored_embedding_path: str, new_audio_files: List[str], 
+                        output_path: str, model: nn.Module, weight: float = 0.7):
     # 저장된 임베딩 로드
     current_embedding = np.load(stored_embedding_path)
 
@@ -38,19 +42,20 @@ def update_voice_profile(stored_embedding_path: str, new_audio_files: List[str],
     for audio_file in new_audio_files:
         new_audio = load_audio(audio_file)
         new_embedding = generate_embedding(model, new_audio)
-        current_embedding = update_embdding(current_embedding, new_embedding, weight)
+        current_embedding = update_embedding(current_embedding, new_embedding, weight)
 
     # 업데이트된 임베딩 저장
     np.save(output_path, current_embedding)
     print(f"Updated embedding saved to {output_path}")
 
 def main():
-	audio_dir = "/home/jaehun/redimnet/hb"
-	stored_embedding_path = "./voice_embeddings/hyebin_embedding.npy"
-	new_audio_files = [os.path.join(audio_dir, audio) for audio in os.listdir(audio_dir)]
-	output_path = "./voice_embeddings/hyebin_embedding.npy"
-	weight = 0.7  # 현재 임베딩의 가중치
-	update_voice_profile(stored_embedding_path, new_audio_files, output_path, weight)
+    model = load_driver_recognition_model()
+    audio_dir = "/home/jaehun/redimnet/sample_voices"
+    stored_embedding_path = "./voice_embeddings/hyebin_embedding.npy"
+    new_audio_files = [os.path.join(audio_dir, audio) for audio in os.listdir(audio_dir)]
+    output_path = "./voice_embeddings/hyebin_embedding.npy"
+    weight = 0.7
+    update_voice_profile(stored_embedding_path, new_audio_files, output_path, model, weight)
 
 if __name__ == "__main__":
     main()

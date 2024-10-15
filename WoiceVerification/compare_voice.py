@@ -1,12 +1,14 @@
 import numpy as np
 import torch
+import torch.nn as nn
 import torchaudio
 from typing import Tuple
 from pathlib import Path
+import os
 import time
 import sys
 import threading
-# ReDimNet 모델 로드 (이전 코드에서 정의한 대로)
+
 
 def loading_animation_thread(stop_event):
     animation = "|/-\\"
@@ -17,7 +19,6 @@ def loading_animation_thread(stop_event):
         time.sleep(0.1)
         i += 1
     sys.stdout.write("\r\033[1;33mLoading: done\033[0m\n")
-
 
 def load_audio(file_path: str) -> torch.Tensor:
     waveform, sample_rate = torchaudio.load(file_path)
@@ -60,8 +61,8 @@ def loading_animation() -> None:
     sys.stdout.write("\r\033[1;33mLoading: done\033[0m\n")
     time.sleep(0.5)
 
-def compare_voices_with_animation(stored_embedding_path: str, new_audio_path: str, threshold: float = 0.7) -> Tuple[bool, float]:
-    print("Starting Speaker Identification ...")
+def compare_voices_with_animation(stored_embedding_path: str, input_audio: torch.Tensor, 
+                                    model: nn.Module, threshold: float = 0.7) -> Tuple[bool, float]:
     
     # 스레드 중지 이벤트 생성
     stop_animation = threading.Event()
@@ -73,8 +74,8 @@ def compare_voices_with_animation(stored_embedding_path: str, new_audio_path: st
     try:
         # 실제 비교 작업 수행
         stored_embedding = np.load(stored_embedding_path)
-        new_audio = load_audio(new_audio_path)
-        new_embedding = generate_embedding(model, new_audio)
+        # new_audio = load_audio(new_audio_path)
+        new_embedding = generate_embedding(model, input_audio)
         similarity = cosine_similarity(stored_embedding, new_embedding)
         is_same_speaker = similarity > threshold
         
@@ -87,33 +88,32 @@ def compare_voices_with_animation(stored_embedding_path: str, new_audio_path: st
     
     return is_same_speaker, similarity
 
-def compare_voices_stdout(stored_embedding_path: str, new_audio_path: str) -> None:
+def compare_voices_stdout(stored_embedding_path: str, input_audio_wave: torch.Tensor, model: nn.Module):
     threshold: float = 0.6
-    is_same, similarity = compare_voices(stored_embedding_path, new_audio_path, threshold)
+    driver_names: list[str] = list(set([f.split('_')[0] for f in os.listdir(stored_embedding_path)]))
     
+    for name in driver_names:
+        stored_embedding_path_with_name = os.path.join(stored_embedding_path, f'{name}_embedding.npy')
+        is_same, similarity = compare_voices_with_animation(stored_embedding_path_with_name, input_audio_wave, 
+                                                                model, threshold)
+        if is_same:
+            print(f"\033[32mSimilarity: {similarity:.4f}\033[0m")
+            print(f"\033[1;32mWoice System: Success({name})\033[0m")
+            return 0, name
     if is_same:
-        print(f"\033[32mSimilarity: {similarity:.4f}\033[0m")
-        print("\033[1;32mWoice System: Success\033[0m")
+        return 0, name
     else:
+        print(name)
         print(f"\033[31mSimilarity: {similarity:.4f}\033[0m")
         print("\033[1;31mWoice System: Fail\033[0m")
+        return (1, None)
+    
 
-def main() -> int:
-    stored_embedding_path = '/home/jaehun/redimnet/voice_embeddings/hyebin_embedding.npy'
-    new_audio_path = '/home/jaehun/skoda/jinse/jinse.wav'
-    threshold = 0.6
-
-    is_same, similarity = compare_voices_with_animation(stored_embedding_path, new_audio_path, threshold)
-    if is_same:
-        print(f"\033[32mSimilarity: {similarity:.4f}\033[0m")
-        print("\033[1;32mWoice System: Success\033[0m")
-    else:
-        print(f"\033[31mSimilarity: {similarity:.4f}\033[0m")
-        print("\033[1;31mWoice System: Fail\033[0m")
-
-    return (0)
-
-if __name__ == "__main__":
-    model = torch.hub.load('IDRnD/ReDimNet', 'b0', pretrained=True, finetuned=True)
-    main()
-
+# if __name__ == "__main__":
+#     model = torch.hub.load('IDRnD/ReDimNet', 'b0', pretrained=True, finetuned=True)
+#     stored_embedding_path = '/home/jaehun/redimnet/voice_embeddings'
+#     new_audio_path = '/home/jaehun/redimnet/hb/hb.wav'
+#     names = list(set([f.split('_')[0] for f in os.listdir('./voice_embeddings')]))
+#     print(names)
+    
+    # compare_voices_stdout(stored_embedding_path, new_audio_path) 

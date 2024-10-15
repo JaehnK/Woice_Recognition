@@ -1,9 +1,12 @@
 import torch
 import torchaudio
+import torch.nn as nn
 import numpy as np
 import json
 from pathlib import Path
 from typing import Dict, Any
+
+from load_model import load_driver_recognition_model
 
 def preprocess_audio(file_path: str) -> torch.Tensor:
     print("processing audios...")
@@ -12,9 +15,11 @@ def preprocess_audio(file_path: str) -> torch.Tensor:
         waveform = torchaudio.functional.resample(waveform, sample_rate, 16000)
     return waveform
 
-def generate_embedding(model: torch.nn.Module, audio: torch.Tensor) -> np.ndarray:
+def generate_embedding(model: nn.Module, audio: torch.Tensor) -> np.ndarray:
     print("Generate embeddings...")
+    print(type(model))
     model.eval()
+
     with torch.no_grad():
         embedding = model(audio)
     return embedding.numpy().flatten()
@@ -29,8 +34,10 @@ def save_metadata(metadata: Dict[str, Any], file_path: str) -> None:
     with open(file_path, 'w') as f:
         json.dump(metadata, f)
 
-def vectorize_and_save_voice(audio_file: str, output_dir: str, speaker_name: str, secret_code: str) -> None:
-    # 출력 디렉토리 생성
+def vectorize_and_save_voice(audio_file: str, output_dir: str, 
+                            speaker_name: str, secret_code: str, language: str,
+                            model:nn.Module) -> None:
+    # create output dir
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     audio = preprocess_audio(audio_file)
@@ -38,10 +45,11 @@ def vectorize_and_save_voice(audio_file: str, output_dir: str, speaker_name: str
     embedding_file = output_dir / f"{speaker_name}_embedding.npy"
     save_embedding(embedding, str(embedding_file))
 
-    # 메타데이터 저장
+    # save metadata
     metadata: Dict[str, Any] = {
         "speaker_name": speaker_name,
         "secret_code" : secret_code,
+        "code_language": language,
         "original_audio": str(audio_file),
         "embedding_file": str(embedding_file),
         "model_used": "ReDimNet_b0",
@@ -55,14 +63,18 @@ def vectorize_and_save_voice(audio_file: str, output_dir: str, speaker_name: str
     print(f"Metadata File: {metadata_file}")
 
 def main() -> int:
-    model: torch.nn.Module = torch.hub.load('IDRnD/ReDimNet', 'b0', pretrained=True, finetuned=True)
+    model: torch.nn.Module = load_driver_recognition_model()
+    if model is None:
+        print("Model failed to load")
+        return 1
 
-    audio_file: str = "/home/jaehun/redimnet/hb/hb.wav"
+    audio_file: str = "/home/jaehun/redimnet/sample_voices/hb.wav"
     output_dir: str = "voice_embeddings"
     speaker_name: str = "hyebin"
     secret_code: str = "forty two"
+    lang: str = 'en-US'
 
-    vectorize_and_save_voice(audio_file, output_dir, speaker_name, secret_code)
+    vectorize_and_save_voice(audio_file, output_dir, speaker_name, secret_code, lang, model)
     return (0)
 
 if __name__ == '__main__':
