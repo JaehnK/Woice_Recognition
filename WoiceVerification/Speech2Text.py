@@ -28,10 +28,10 @@ def SpeechRecognition(AudioPath: str, name: str) -> str:
     InputCode = r.recognize_google(audio_data=audio, language=lang)
     # print(InputCode, code)
     if (code == InputCode):
-        print("Driver Authentification Passed Welcome")
+        print("\033[1;32mDriver Authentification Passed Welcome\033[0m")
         print(f"\033[1;34mEnjoy Your Journey {name}\033[0m")
     else:
-        print("Driver Authentification Failed. ")
+        print("\033[1;31mDriver Authentification Failed.: Wrong Code\033[0m")
     
     return 
 

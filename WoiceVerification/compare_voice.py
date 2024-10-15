@@ -103,7 +103,7 @@ def compare_voices_stdout(stored_embedding_path: str, input_audio_wave: torch.Te
     if is_same:
         return 0, name
     else:
-        print(name)
+        # print(name)
         print(f"\033[31mSimilarity: {similarity:.4f}\033[0m")
         print("\033[1;31mWoice System: Fail\033[0m")
         return (1, None)
