@@ -1,0 +1,1 @@
+{"speaker_name": "jaehun", "secret_code": "hello world", "code_language": "en-US", "original_audio": "/home/jaehun/redimnet/jaehun/jh1.wav", "embedding_file": "voice_embeddings/jaehun_embedding.npy", "model_used": "ReDimNet_b0", "embedding_dim": 192}

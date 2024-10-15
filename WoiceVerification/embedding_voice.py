@@ -68,10 +68,10 @@ def main() -> int:
         print("Model failed to load")
         return 1
 
-    audio_file: str = "/home/jaehun/redimnet/sample_voices/hb.wav"
+    audio_file: str = "/home/jaehun/redimnet/jaehun/jh1.wav"
     output_dir: str = "voice_embeddings"
-    speaker_name: str = "hyebin"
-    secret_code: str = "forty two"
+    speaker_name: str = "jaehun"
+    secret_code: str = "hello world"
     lang: str = 'en-US'
 
     vectorize_and_save_voice(audio_file, output_dir, speaker_name, secret_code, lang, model)

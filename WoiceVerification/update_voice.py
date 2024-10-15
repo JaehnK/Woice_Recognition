@@ -50,10 +50,10 @@ def update_voice_profile(stored_embedding_path: str, new_audio_files: List[str],
 
 def main():
     model = load_driver_recognition_model()
-    audio_dir = "/home/jaehun/redimnet/sample_voices"
-    stored_embedding_path = "./voice_embeddings/hyebin_embedding.npy"
+    audio_dir = "/home/jaehun/redimnet/jaehun"
+    stored_embedding_path = "./voice_embeddings/jaehun_embedding.npy"
     new_audio_files = [os.path.join(audio_dir, audio) for audio in os.listdir(audio_dir)]
-    output_path = "./voice_embeddings/hyebin_embedding.npy"
+    output_path = "./voice_embeddings/jaehun_embedding.npy"
     weight = 0.7
     update_voice_profile(stored_embedding_path, new_audio_files, output_path, model, weight)
 
